@@ -1,74 +1,96 @@
-echo "Welcome! Let's start setting up your system xD It could take more than 10 minutes, be patient"
+echo "Let's start setting up your system"
+echo "First Let's Update your system..."
+sudo dnf upgrade --refresh -y
 
-sudo apt-get update
+echo 'Installing Free and Nonfree Repositories'
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
-echo 'installing curl' 
-sudo apt install curl -y
+echo 'Installing Google Cloud SDK Repository'
+sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
+[google-cloud-sdk]
+name=Google Cloud SDK
+baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM
+
+echo ' Installing VSCODE repository'
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo' -y
+
+echo 'Updating after repositories...'
+sudo dnf check-update -y
+
+echo 'Installing Visual Studio Code'
+sudo dnf install code
+
+echo 'Installing GCloud SDK'
+sudo dnf install google-cloud-sdk -y
+
+echo 'installing Nodejs' 
+sudo dnf install nodejs.x86_64 -y
+
+echo 'installing firebase'
+sudo npm install -g firebase-tools
+
+echo 'installing Tilix Terminal'
+sudo dnf install tilix
+
+echo 'installing colors grc'
+sudo dnf install grc -y  
+
+echo 'installing stremio'
+sudo dnf install https://dl.strem.io/linux/v4.4.106/stremio-4.4.106-1.fc31.x86_64.rpm -y
+
+echo 'installing multimidia'
+sudo dnf install ffmpeg audacious peek youtube-dl -y
+
+echo 'installing backup tools' 
+sudo dnf install timeshift -y
 
 echo 'installing vim'
-sudo apt install vim -y
-clear
+sudo dnf install vim -y
 
-echo 'installing git' 
-sudo apt install git -y
+echo "Setting GIT user.name"
+git config --global user.name "Diego Dario"
 
-echo "What name do you want to use in GIT user.name?"
-echo "For example, mine will be \"Olavio Lacerda\""
-read git_config_user_name
-git config --global user.name "$git_config_user_name"
-clear 
+echo "Setting GIT user.email"
+git config --global user.email "diegodario88@gmail.com"
 
-echo "What email do you want to use in GIT user.email?"
-echo "For example, mine will be \"olavio.lacerda@hotmail.com\""
-read git_config_user_email
-git config --global user.email $git_config_user_email
-clear
+echo "Setting VIM as your default GIT editor"
+git config --global core.editor vim
 
-echo "Can I set VIM as your default GIT editor for you? (y/n)"
-read git_core_editor_to_vim
-if echo "$git_core_editor_to_vim" | grep -iq "^y" ;then
-	git config --global core.editor vim
-else
-	echo "Okay, no problem. :) Let's move on!"
-fi
+echo 'installing tool to handle clipboard via CLI'
+sudo dnf install xclip -y
 
 echo "Generating a SSH Key"
-ssh-keygen -t rsa -b 4096 -C $git_config_user_email
+ssh-keygen -t rsa -b 4096 -C "diegodario88@gmail.com"
+eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
 cat ~/.ssh/id_rsa.pub | xclip -selection clipboard
-
-echo 'enabling workspaces for both screens' 
-gsettings set org.gnome.mutter workspaces-only-on-primary false
 
 echo 'installing zsh'
 sudo apt-get install zsh -y
 sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 chsh -s /bin/zsh
 
-echo 'installing tool to handle clipboard via CLI'
-sudo apt-get install xclip -y
 
 export alias pbcopy='xclip -selection clipboard'
 export alias pbpaste='xclip -selection clipboard -o'
 source ~/.zshrc
 
-echo 'installing code'
-curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
-sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-sudo apt-get install apt-transport-https -y
-sudo apt-get update
-sudo apt-get install code -y # or code-insiders
-
 echo 'installing extensions'
-code --install-extension Shan.code-settings-sync
-
-echo 'installing spotify' 
-snap install spotify
+code --install-extension CoenraadS.bracket-pair-colorizer
+code --install-extension EditorConfig.EditorConfig
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension PKief.material-icon-theme
+code --install-extension AndrsDC.base16-themes
 
 echo 'installing chrome' 
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i google-chrome-stable_current_amd64.deb
+sudo dnf install https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
 
 echo 'installing nvm' 
 sh -c "$(curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash)"
@@ -84,134 +106,24 @@ export NVM_DIR="$HOME/.nvm"
 
 source ~/.zshrc
 nvm --version
-nvm install 12
-nvm alias default 12
-node --version
-npm --version
 
 echo 'installing Typescript'
 npm install -g typescript
 
-echo 'installing Create React App'
-npm install -g create-react-app
-
 echo 'installing autosuggestions' 
-git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
-echo "source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc
+git clone https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
+
+echo 'installing syntax highlighting'
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
 source ~/.zshrc
 
-echo 'installing theme'
-sudo apt install fonts-firacode -y
-wget -O ~/.oh-my-zsh/themes/node.zsh-theme https://raw.githubusercontent.com/skuridin/oh-my-zsh-node-theme/master/node.zsh-theme 
-sed -i 's/.*ZSH_THEME=.*/ZSH_THEME="node"/g' ~/.zshrc
+echo 'installing podman-compose' 
+sudo dnf install podman-compose -y
+podman-compose --version
 
-echo 'installing franz' 
-wget https://github.com/meetfranz/franz/releases/download/v5.1.0/franz_5.1.0_amd64.deb -O franz.deb
-sudo dpkg -i franz.debchristian-kohler.path-intellisense
-sudo apt-get install -y -f 
-
-echo 'installing terminator'
-sudo apt-get update
-sudo apt-get install terminator -y
-
-echo 'adding dracula theme' 
-cat <<EOF >  ~/.config/terminator/config
-[global_config]
-  title_transmit_bg_color = "#ad7fa8"
-[keybindings]
-  close_term = <Primary>w
-  close_window = <Primary>q
-  new_tab = <Primary>t
-  new_window = <Primary>i
-  paste = <Primary>v
-  split_horiz = <Primary>e
-  split_vert = <Primary>d
-  switch_to_tab_1 = <Primary>1
-  switch_to_tab_10 = <Primary>0
-  switch_to_tab_2 = <Primary>2
-  switch_to_tab_3 = <Primary>3
-  switch_to_tab_4 = <Primary>4
-  switch_to_tab_5 = <Primary>5
-  switch_to_tab_6 = <Primary>6
-[layouts]
-  [[default]]
-    [[[child1]]]
-      parent = window0
-      type = Terminal
-    [[[window0]]]
-      parent = ""
-      type = Window
-[plugins]
-[profiles]
-  [[default]]
-    cursor_color = "#aaaaaa"
-EOF
-
-
-cat <<EOF >>  ~/.config/terminator/config
-[[Dracula]]
-    background_color = "#1e1f29"
-    background_darkness = 0.88
-    background_type = transparent
-    copy_on_selection = True
-    cursor_color = "#bbbbbb"
-    foreground_color = "#f8f8f2"
-    palette = "#000000:#ff5555:#50fa7b:#f1fa8c:#bd93f9:#ff79c6:#8be9fd:#bbbbbb:#555555:#ff5555:#50fa7b:#f1fa8c:#bd93f9:#ff79c6:#8be9fd:#ffffff"
-    scrollback_infinite = True
-EOF
-
-echo 'installing docker' 
-sudo apt-get remove docker docker-engine docker.io
-sudo apt install docker.io -y
-sudo systemctl start docker
-sudo systemctl enable docker
-docker --version
-
-chmod 777 /var/run/docker.sock
-docker run hello-world
-
-echo 'installing docker-compose' 
-sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-docker-compose --version
-
-echo 'installing kubectl'
-curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
-
-echo 'installing heroku-cli'
-curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-heroku --version
-
-echo 'installing aws-cli' 
-sudo apt-get install awscli -y
-aws --version
-curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-sudo dpkg -i session-manager-plugin.deb
-session-manager-plugin --version
-
-echo 'installing fzf'
-git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-~/.fzf/install --all
-
-echo 'installing dbeaver'
-wget -c https://dbeaver.io/files/6.0.0/dbeaver-ce_6.0.0_amd64.deb
-sudo dpkg -i dbeaver-ce_6.0.0_amd64.deb
-sudo apt-get install -f
-
-echo 'installing Robo3t'
-snap install robo3t-snap
-
-echo 'installing Postman' 
-snap install postman
-
-echo 'installing vlc'
-sudo apt install vlc -y
-sudo apt install vlc-plugin-access-extra libbluray-bdj libdvdcss2 -y
-
-echo 'installing transmission'
-sudo add-apt-repository ppa:transmissionbt/ppa
-sudo apt-get update
-sudo apt-get install transmission transmission-qt -y
+echo 'installing Mongodb Compass'
+sudo dnf install mongodb-compass.x86_64
 
 clear 
 
